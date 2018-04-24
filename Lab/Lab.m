@@ -1,5 +1,7 @@
 %Laboration i TSKS10 Signaler, kommunikation och information
 %Maria Posluk, marpo758, 950310-0829
+%Fråga på labben: Ordning på butterfilter? Får man använda xcorr? Om inte,
+%hur gör man? 
 
 
 %% Ta ut information om den mottagna signalen y(t)
@@ -12,7 +14,9 @@ freq = linspace(0, fs/2, length_half);
 %% Rita ut amplitudspektrat för Y(f)
 figure(1)
 hold on
-plot(freq, Y(1:length_half)); %Möjliga bärfrekvenser: 36 kHz, 93 kHz, 150 kz
+plot(freq, Y(1:length_half)); %Möjliga bärfrekvenser: 36 kHz, 93 kHz, 150 kz.
+%Zoomar in där det finns en märkbar topp men ej nära möjlig bärfrekvens. =>
+%ser att f1 och f2 är 59499 Hz och 59500 Hz.
 title('Amplitudsspektrum'), xlabel('Frekvens [Hz]'), ylabel('|Y|');
 hold off
 
@@ -47,7 +51,7 @@ plot(t, y150);
 title('Vid frekvens 150 kHz'), xlabel('Tid [s]'), ylabel('y(t)');
 %I figur 3 kan man se att det är 36 kHz som är bärfrekvensen.
 
-%% Korrelation
+%% Korrelation och tidsfördröjning
 
 korr = xcorr(y36);
 
@@ -59,8 +63,28 @@ title('Autokorrelation vid frekvens 36 kHz'), xlabel('Sampel'), ylabel('Korrelat
 deltasampel = 1.68*10^5;
 Tau = deltasampel/fs; %Tau = 0.4200 s = 420 ms
 
+x(1:deltasampel) = y36(1:deltasampel);
+for index = deltasampel+1:length(y)   
+    % y(t) = x(t-Tau1) + 0.9x(t-Tau2)
+    % x(t+(Tau2-Tau1)) = y(t+(Tau2-Tau1)) - 0.9x(t) dubbelkolla sen
+    x(index) = y36(index) - 0.9*x(index - deltasampel);
+end
+    
+
+%% I/Q-demodulering
+fc = 36000;
+phi = pi/2;
+xI = zeros(size(y));
+xQ = zeros(size(y));
+for index = 1:length(y)
+    xI(index) = y(index) * 2 * cos(2*pi*fc/fs*index+phi);
+    xQ(index) = y(index) * (-2) * sin(2*pi*fc/fs*index+phi);
+end
 %xI = y * 2 * cos(2*pi*fc*t);
 %xQ = y * (-2) * sin(2*pi*fc*t);
+
+%% Filtrera och lyssna
+
 
 
 
