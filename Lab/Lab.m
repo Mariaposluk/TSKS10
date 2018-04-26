@@ -1,14 +1,13 @@
 %Laboration i TSKS10 Signaler, kommunikation och information
-%Maria Posluk, marpo758, 950310-0829
-%Fråga på labben: Ordning på butterfilter? Får man använda xcorr? Om inte,
-%hur gör man? 
+%Maria Posluk, marpo758
+%Fråga på labben: 
+%fftshift?
 
 
 %% Ta ut information om den mottagna signalen y(t)
 [y, fs] = audioread('signal-marpo758.wav');
 Ts = 1/fs;
-Y = fftshift(fft(y));
-Y = abs(Y);
+Y = abs(fft(y));
 length_half = ceil(length(y)/2);
 freq = linspace(0, fs/2, length_half);
 %% Rita ut amplitudspektrat för Y(f)
@@ -16,7 +15,7 @@ figure(1)
 hold on
 plot(freq, Y(1:length_half)); %Möjliga bärfrekvenser: 36 kHz, 93 kHz, 150 kz.
 %Zoomar in där det finns en märkbar topp men ej nära möjlig bärfrekvens. =>
-%ser att f1 och f2 är 59499 Hz och 59500 Hz.
+%ser att f1 och f2 är 140500 Hz och 140501 Hz.
 title('Amplitudsspektrum'), xlabel('Frekvens [Hz]'), ylabel('|Y|');
 hold off
 
@@ -24,7 +23,7 @@ hold off
 norm_freq = linspace(0, 1, length_half);
 figure(2)
 hold on
-plot(norm_freq, Y(1:length_half)); %
+plot(norm_freq, Y(1:length_half));
 title('Amplitudsspektrum'), xlabel('Normerad frekvens'), ylabel('|Y|');
 hold off
 %% Filtrera kring de möjliga bärfrekvenserna med buttherworth 
@@ -36,7 +35,7 @@ y36 = filter(B36, A36, y);
 y93 = filter(B93, A93, y);
 y150 = filter(B150, A150, y);
 %% Räkna ut en tidsvektor för att kunna rita ut y(t)
-time = length(y)*Ts;
+time = length(y)*Ts; %antalet sampel / sampelfrekvens
 t = (0:Ts:time-Ts);
 %% Rita ut y(t) kring de möjliga bärfrekvenserna
 figure(3)
@@ -70,20 +69,38 @@ for index = deltasampel+1:length(y)
     x(index) = y36(index) - 0.9*x(index - deltasampel);
 end
     
+%% Sigsys metoden (isället för korrelation)
+
+% %H = 1*exp(-1i*2*pi*f*tau1) + 0.9*exp(-1i*2*pi*f*tau2); 
+% absH2 = abs(1^2 + 0.9^2 + 2*1*cos(2*pi*f*deltatau)); %(absH)^2
+% absY = abs(X)*sqrt(absH2);
+% w = 0.001*(cos(2*pi*f1*t)+cos(2*pi*f2*t));
+% W = fft(w);
+
 
 %% I/Q-demodulering
 fc = 36000;
-phi = pi/2;
+phi = 3*pi/5; %testar
 xI = zeros(size(y));
 xQ = zeros(size(y));
 for index = 1:length(y)
-    xI(index) = y(index) * 2 * cos(2*pi*fc/fs*index+phi);
-    xQ(index) = y(index) * (-2) * sin(2*pi*fc/fs*index+phi);
+    xI(index) = x(index) * 2 * cos(2*pi*fc/fs*index+phi);
+    xQ(index) = x(index) * (-2) * sin(2*pi*fc/fs*index+phi);    
 end
 %xI = y * 2 * cos(2*pi*fc*t);
 %xQ = y * (-2) * sin(2*pi*fc*t);
 
 %% Filtrera och lyssna
+%Lågpassfiltrera med bredden av fc = 36 kHz som gränsfrekvens
+[ButterB, ButterA] = butter(6, (0.2081-0.1524));
+filtered_xI = filter(ButterB, ButterA, xI);
+filtered_xQ = filter(ButterB, ButterA, xQ);
+
+decimated_xI = decimate(filtered_xI, 10);
+decimated_xQ = decimate(filtered_xQ, 10);
+
+soundsc(decimated_xI, fs/10);
+soundsc(decimated_xQ, fs/10);
 
 
 
