@@ -73,7 +73,7 @@ end
 
 %% I/Q-demodulering
 fc = 36000;
-phi = 5*pi; %testar, phi påverkar inte resultatet???
+phi = pi; %testar
 xI = zeros(size(y));
 xQ = zeros(size(y));
 for index = 1:length(y)
@@ -92,7 +92,7 @@ filtered_xQ = filter(ButterB, ButterA, xQ);
 decimated_xI = decimate(filtered_xI, 10);
 decimated_xQ = decimate(filtered_xQ, 10);
 
-soundsc(decimated_xI, fs/10); %Skrattar bäst som skrattar sist
+soundsc(decimated_xI, fs/10); %Skrattar bäst som skrattar s
 %soundsc(decimated_xQ, fs/10); %Även små grytor har öron
 
 
