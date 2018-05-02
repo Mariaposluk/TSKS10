@@ -1,7 +1,5 @@
 %Laboration i TSKS10 Signaler, kommunikation och information
 %Maria Posluk, marpo758
-%Fråga på labben: 
-%fftshift?
 
 
 %% Ta ut information om den mottagna signalen y(t)
