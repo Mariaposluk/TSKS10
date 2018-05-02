@@ -1,6 +1,10 @@
 %Laboration i TSKS10 Signaler, kommunikation och information
 %Maria Posluk, marpo758
 
+%%
+
+clear all
+close all
 
 %% Ta ut information om den mottagna signalen y(t)
 [y, fs] = audioread('signal-marpo758.wav');
@@ -26,8 +30,18 @@ hold on
 plot(norm_freq, Y(1:length_half));
 title('Amplitudsspektrum'), xlabel('Normerad frekvens'), ylabel('|Y|');
 hold off
+
+%% Rita ut f1 och f2
+
+freqs = ((freq > 1.40495e5) & (freq < 1.40505e5));
+figure(3)
+hold on
+plot(freq(freqs), Y(freqs));
+title('Frekvenserna f1 och f2'), xlabel('Frekvens [Hz]'), ylabel('|Y|');
+hold off
+
 %% Filtrera kring de möjliga bärfrekvenserna med buttherworth 
-[B36,A36] = butter(9, [0.16, 0.20]); %ordning på filtret??
+[B36,A36] = butter(9, [0.16, 0.20]);
 [B93,A93] = butter(9, [0.44, 0.49]);
 [B150,A150] = butter(9, [0.73, 0.77]);
 
@@ -39,7 +53,7 @@ y150 = filter(B150, A150, y);
 %t = (0:Ts:time-Ts);
 t = (0:length(y)-1)/fs;
 %% Rita ut y(t) kring de möjliga bärfrekvenserna
-figure(3)
+figure(4)
 subplot(3, 1, 1);
 plot(t, y36);
 title('Vid frekvens 36 kHz'), xlabel('Tid [s]'), ylabel('y(t)');
@@ -55,7 +69,7 @@ title('Vid frekvens 150 kHz'), xlabel('Tid [s]'), ylabel('y(t)');
 
 korr = xcorr(y36);
 
-figure(4)
+figure(5)
 plot(korr); 
 title('Autokorrelation vid frekvens 36 kHz'), xlabel('Sampel'), ylabel('Korrelation');
 % topp till vänster: 5.032*10^6 sampel, topp i mitten: 5.2*10^6 sampel, topp till höger: 5.368*10^6 sampel.
@@ -71,12 +85,12 @@ end
 
 %% I/Q-demodulering
 fc = 36000;
-phi = 5*pi; %testar, phi påverkar inte resultatet???
+phi = pi/2;
 xI = zeros(size(y));
 xQ = zeros(size(y));
 for index = 1:length(y)
     xI(index) = x(index) * 2 * cos(2*pi*fc/fs*index+phi);
-    xQ(index) = x(index) * (-2) * sin(2*pi*fc/fs*index+phi);    
+    xQ(index) = x(index) * (-2) * sin(2*pi*fc/fs*index+phi);  
 end
 %xI = y * 2 * cos(2*pi*fc*t);
 %xQ = y * (-2) * sin(2*pi*fc*t);
@@ -90,8 +104,8 @@ filtered_xQ = filter(ButterB, ButterA, xQ);
 decimated_xI = decimate(filtered_xI, 10);
 decimated_xQ = decimate(filtered_xQ, 10);
 
-soundsc(decimated_xI, fs/10); %Skrattar bäst som skrattar sist
-%soundsc(decimated_xQ, fs/10); %Även små grytor har öron
+%soundsc(decimated_xI, fs/10); %Även små grytor har öron
+soundsc(decimated_xQ, fs/10); %Skrattar bäst som skrattar sist
 
 
 
