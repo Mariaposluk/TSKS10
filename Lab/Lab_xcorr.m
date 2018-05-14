@@ -52,8 +52,6 @@ y150 = filter(B150, A150, y);
 %% Räkna ut en tidsvektor för att kunna rita ut y(t)
 time = length(y)*Ts; %Längd på filen
 t = (0:Ts:time-Ts);
-N = size(t,1);
-%t = (0:lengthy-1)/fs;
 %% Rita ut y(t) kring de möjliga bärfrekvenserna
 figure(4)
 subplot(3, 1, 1);
@@ -80,7 +78,7 @@ deltasampel = 1.68*10^5;
 Tau = deltasampel/fs; %Tau = 0.4200 s = 420 ms
 
 x(1:deltasampel) = y36(1:deltasampel);
-for index = deltasampel+1:lengthy   
+for index = deltasampel+1:lengthy
     x(index) = y36(index) - 0.9*x(index - deltasampel);
 end
 
@@ -88,24 +86,24 @@ end
 
 %% I/Q-demodulering
 fc = 36000;
-phi = pi/2;
+phi = 11*pi/20;
 xI = zeros(size(y));
 xQ = zeros(size(y));
 for index = 1:lengthy
     xI(index) = x(index) * 2 * cos(2*pi*fc/fs*index+phi);
-    xQ(index) = x(index) * (-2) * sin(2*pi*fc/fs*index+phi);  
+    xQ(index) = x(index) * (-2) * sin(2*pi*fc/fs*index+phi);
 end
 
 %% Filtrera och lyssna
 %Lågpassfiltrera med bredden av fc = 36 kHz som gränsfrekvens
-[ButterB, ButterA] = butter(9, (0.20-0.16));
+[ButterB, ButterA] = butter(9, (0.21-0.15));
 filtered_xI = filter(ButterB, ButterA, xI);
 filtered_xQ = filter(ButterB, ButterA, xQ);
 
 decimated_xI = decimate(filtered_xI, 10);
 decimated_xQ = decimate(filtered_xQ, 10);
 
-soundsc(decimated_xI, fs/10); %Även små grytor har öron
-%soundsc(decimated_xQ, fs/10); %Skrattar bäst som skrattar sist
+%soundsc(decimated_xI, fs/10); %Även små grytor har öron
+soundsc(decimated_xQ, fs/10); %Skrattar bäst som skrattar sist
 
 
