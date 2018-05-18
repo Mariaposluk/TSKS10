@@ -1,9 +1,9 @@
-%Laboration i TSKS10 Signaler, kommunikation och information
+%Laboration i TSKS10 Signaler, information och kommunikation 
 %Maria Posluk, marpo758
 
 %%
 
-clear all
+%clear all
 close all
 
 %% Ta ut information om den mottagna signalen y(t)
@@ -14,6 +14,7 @@ lengthy = length(y);
 length_half = ceil(lengthy/2);
 freq = linspace(0, fs/2, length_half);
 %% Rita ut amplitudspektrat för Y(f)
+figure('DefaultAxesFontSize',16);
 figure(1)
 hold on
 plot(freq, Y(1:length_half)); %Möjliga bärfrekvenser: 36 kHz, 93 kHz, 150 kz.
@@ -26,6 +27,7 @@ hold off
 % frekvens för att läsa av bandbredden för de tre
 % möjliga bärfrekvenserna för att använda Matlabs filtrering.
 norm_freq = linspace(0, 1, length_half);
+figure('DefaultAxesFontSize',16);
 figure(2)
 hold on
 plot(norm_freq, Y(1:length_half));
@@ -35,6 +37,7 @@ hold off
 %% Rita ut f1 och f2
 
 freqs = ((freq > 1.40495e5) & (freq < 1.40505e5));
+figure('DefaultAxesFontSize',16);
 figure(3)
 hold on
 plot(freq(freqs), Y(freqs));
@@ -49,11 +52,13 @@ hold off
 y36 = filter(B36, A36, y);
 y93 = filter(B93, A93, y);
 y150 = filter(B150, A150, y);
+
 %% Räkna ut en tidsvektor för att kunna rita ut y(t)
 time = lengthy*Ts; %Längd på filen
 t = (0:Ts:time-Ts);
-N = size(t,1);
+
 %% Rita ut y(t) kring de möjliga bärfrekvenserna
+
 figure(4)
 subplot(3, 1, 1);
 plot(t, y36);
@@ -76,6 +81,7 @@ w = 0.001*(cos(2*pi*f1*t) + cos(2*pi*f2*t));
 W = abs(fft(w));
 
 %Läser av värdena i f1 och f2
+figure('DefaultAxesFontSize',16);
 figure(5)
 hold on
 plot(freq, W(1:length_half));
@@ -88,7 +94,8 @@ Wf2 = 2600;
 Hf1 = Yf1/Wf1;
 Hf2 = Yf2/Wf2;
 
-threshold = 0.01;
+smallest_diff1 = inf;
+smallest_diff2 = inf;
 deltatau = (0.001:0.001:0.5);
 diff1 = zeros(500:1);
 diff2 = zeros(500:1);
@@ -97,19 +104,25 @@ for index = 1:500
     H2 = sqrt(1+0.9^2+1.8*cos(2*pi*f2*deltatau(index)));
     diff1(index) = abs(H1-Hf1);
     diff2(index) = abs(H2-Hf2);
-    if (diff1(index)<threshold && diff2(index)<threshold)
+    if (diff1(index) <= smallest_diff1 && diff2(index) <= smallest_diff2)
         tau = deltatau(index); %Resultatet på tau = 0.420 s
+        smallest_diff1 = diff1(index);
+        smallest_diff2 = diff2(index);
     end
 end
 
 
+
 %% Rita ut tau
 
+figure('DefaultAxesFontSize',16);
 figure(6)
 plot(deltatau, diff1, 'r')
 hold on
 plot(deltatau, diff2, 'b')
-legend('abs(H(f1)) - abs(Y(f1))/abs(W(f1))', 'abs(H(f2)) - abs(Y(f2))/abs(W(f2))')
+legend('|H(f1)| - |Y(f1)|/|W(f1)|', '|H(f2)| - |Y(f2)|/|W(f2)|')
+title('Bestämma ??'), xlabel('?? [s]'), ylabel('|H(f)| - |Y(f)|/|W(f)|');
+hold off
 
 %Figur 6 ger att deltatau = 0,420 s
 
@@ -126,7 +139,7 @@ end
 
 %% I/Q-demodulering
 fc = 36000;
-phi = 11*pi/20;
+phi = pi/20;
 xI = zeros(size(y));
 xQ = zeros(size(y));
 for index = 1:lengthy
@@ -134,16 +147,17 @@ for index = 1:lengthy
     xQ(index) = x(index) * (-2) * sin(2*pi*fc/fs*index+phi);  
 end
 
+
 %% Filtrera och lyssna
 %Lågpassfiltrera med bredden av fc = 36 kHz som gränsfrekvens
 [ButterB, ButterA] = butter(9, (0.20-0.16));
 filtered_xI = filter(ButterB, ButterA, xI);
 filtered_xQ = filter(ButterB, ButterA, xQ);
 
-decimated_xI = decimate(filtered_xI, 10);
-decimated_xQ = decimate(filtered_xQ, 10);
+decimated_xI = decimate(filtered_xI, 40);
+decimated_xQ = decimate(filtered_xQ, 40);
 
-%soundsc(decimated_xI, fs/10); %Även små grytor har öron
-soundsc(decimated_xQ, fs/10); %Skrattar bäst som skrattar sist
+%soundsc(decimated_xI); %Skrattar bäst som skrattar sist
+soundsc(decimated_xQ); %Även små grytor har öron
 
 
